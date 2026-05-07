@@ -517,6 +517,18 @@ inline size_type get_num_batch_items(const T& obj)
     } while (false)
 
 
+#ifdef GKO_COMPILING_MUSA
+#undef GKO_ASSERT_NO_CUDA_ERRORS
+#define GKO_ASSERT_NO_CUDA_ERRORS(_cuda_call) \
+    do {                                      \
+        auto _errcode = _cuda_call;           \
+        if (_errcode != musaSuccess) {        \
+            throw GKO_CUDA_ERROR(static_cast<int64>(_errcode)); \
+        }                                     \
+    } while (false)
+#endif
+
+
 /**
  * Asserts that a cuBLAS library call completed without errors.
  *
@@ -529,6 +541,18 @@ inline size_type get_num_batch_items(const T& obj)
             throw GKO_CUBLAS_ERROR(_errcode);     \
         }                                         \
     } while (false)
+
+
+#ifdef GKO_COMPILING_MUSA
+#undef GKO_ASSERT_NO_CUBLAS_ERRORS
+#define GKO_ASSERT_NO_CUBLAS_ERRORS(_cublas_call) \
+    do {                                          \
+        auto _errcode = _cublas_call;             \
+        if (_errcode != MUBLAS_STATUS_SUCCESS) {  \
+            throw GKO_CUBLAS_ERROR(static_cast<int64>(_errcode)); \
+        }                                         \
+    } while (false)
+#endif
 
 
 /**
@@ -545,6 +569,18 @@ inline size_type get_num_batch_items(const T& obj)
     } while (false)
 
 
+#ifdef GKO_COMPILING_MUSA
+#undef GKO_ASSERT_NO_CURAND_ERRORS
+#define GKO_ASSERT_NO_CURAND_ERRORS(_curand_call) \
+    do {                                          \
+        auto _errcode = _curand_call;             \
+        if (_errcode != MURAND_STATUS_SUCCESS) {  \
+            throw GKO_CURAND_ERROR(static_cast<int64>(_errcode)); \
+        }                                         \
+    } while (false)
+#endif
+
+
 /**
  * Asserts that a cuSPARSE library call completed without errors.
  *
@@ -559,6 +595,18 @@ inline size_type get_num_batch_items(const T& obj)
     } while (false)
 
 
+#ifdef GKO_COMPILING_MUSA
+#undef GKO_ASSERT_NO_CUSPARSE_ERRORS
+#define GKO_ASSERT_NO_CUSPARSE_ERRORS(_cusparse_call) \
+    do {                                              \
+        auto _errcode = _cusparse_call;               \
+        if (_errcode != MUSPARSE_STATUS_SUCCESS) {    \
+            throw GKO_CUSPARSE_ERROR(static_cast<int64>(_errcode)); \
+        }                                             \
+    } while (false)
+#endif
+
+
 /**
  * Asserts that a cuFFT library call completed without errors.
  *
@@ -571,6 +619,18 @@ inline size_type get_num_batch_items(const T& obj)
             throw GKO_CUFFT_ERROR(_errcode);    \
         }                                       \
     } while (false)
+
+
+#ifdef GKO_COMPILING_MUSA
+#undef GKO_ASSERT_NO_CUFFT_ERRORS
+#define GKO_ASSERT_NO_CUFFT_ERRORS(_cufft_call) \
+    do {                                        \
+        auto _errcode = _cufft_call;            \
+        if (_errcode != MUFFT_SUCCESS) {        \
+            throw GKO_CUFFT_ERROR(static_cast<int64>(_errcode)); \
+        }                                       \
+    } while (false)
+#endif
 
 
 /**

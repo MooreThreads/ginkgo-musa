@@ -10,6 +10,8 @@
 #include "cuda/base/cublas_bindings.hpp"
 #elif defined(GKO_COMPILING_HIP)
 #include "hip/base/hipblas_bindings.hip.hpp"
+#elif defined(GKO_COMPILING_MUSA)
+#include "musa/base/mublas_bindings.hpp"
 #else
 #error "Executor definition missing"
 #endif

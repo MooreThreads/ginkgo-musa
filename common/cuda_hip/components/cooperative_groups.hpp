@@ -10,6 +10,8 @@
 #include "cuda/components/cooperative_groups.cuh"
 #elif defined(GKO_COMPILING_HIP)
 #include "hip/components/cooperative_groups.hip.hpp"
+#elif defined(GKO_COMPILING_MUSA)
+#include "musa/components/cooperative_groups.hpp"
 #else
 #error "Executor definition missing"
 #endif

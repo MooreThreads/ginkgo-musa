@@ -10,6 +10,8 @@
 #include "cuda/base/cusparse_block_bindings.hpp"
 #elif defined(GKO_COMPILING_HIP)
 #include "hip/base/hipsparse_block_bindings.hip.hpp"
+#elif defined(GKO_COMPILING_MUSA)
+#include "musa/base/musparse_block_bindings.hpp"
 #else
 #error "Executor definition missing"
 #endif

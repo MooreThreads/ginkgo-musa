@@ -11,6 +11,8 @@
 #include "cuda/base/types.hpp"
 #elif defined(GKO_COMPILING_HIP)
 #include "hip/base/types.hip.hpp"
+#elif defined(GKO_COMPILING_MUSA)
+#include "musa/base/types.hpp"
 #else
 #error "Executor definition missing"
 #endif

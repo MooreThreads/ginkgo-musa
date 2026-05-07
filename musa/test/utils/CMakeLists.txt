@@ -1,0 +1,1 @@
+ginkgo_create_musa_test(assertions_test)

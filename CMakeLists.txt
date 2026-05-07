@@ -58,6 +58,7 @@ option(
     "Compile kernels for AMD or NVIDIA GPUs"
     ${GINKGO_HAS_HIP}
 )
+option(GINKGO_BUILD_MUSA "Compile kernels for Moore Threads GPUs" ${GINKGO_HAS_MUSA})
 option(GINKGO_BUILD_DOC "Generate documentation" OFF)
 option(
     GINKGO_FAST_TESTS
@@ -223,6 +224,9 @@ if(GINKGO_BUILD_CUDA)
         message(STATUS "Enable custom thrust namespace for cuda")
         set(GINKGO_CUDA_CUSTOM_THRUST_NAMESPACE ON)
     endif()
+endif()
+if(GINKGO_BUILD_MUSA)
+    include(cmake/musa.cmake)
 endif()
 if(GINKGO_BUILD_HIP)
     include(cmake/hip.cmake)
@@ -539,6 +543,9 @@ if(GINKGO_BUILD_REFERENCE)
 endif()
 if(GINKGO_BUILD_HIP)
     add_subdirectory(hip) # High-performance kernels for AMD or NVIDIA GPUs
+endif()
+if(GINKGO_BUILD_MUSA)
+    add_subdirectory(musa) # High-performance kernels for Moore Threads GPUs
 endif()
 if(GINKGO_BUILD_SYCL)
     add_subdirectory(dpcpp) # High-performance DPC++ kernels

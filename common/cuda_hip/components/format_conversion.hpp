@@ -10,6 +10,8 @@
 #include "cuda/components/format_conversion.cuh"
 #elif defined(GKO_COMPILING_HIP)
 #include "hip/components/format_conversion.hip.hpp"
+#elif defined(GKO_COMPILING_MUSA)
+#include "musa/components/format_conversion.hpp"
 #else
 #error "Executor definition missing"
 #endif

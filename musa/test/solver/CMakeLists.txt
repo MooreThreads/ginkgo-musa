@@ -1,0 +1,2 @@
+ginkgo_create_musa_test(lower_trs_kernels)
+ginkgo_create_musa_test(upper_trs_kernels)

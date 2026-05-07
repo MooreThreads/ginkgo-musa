@@ -3,6 +3,7 @@ set(GINKGO_HAS_MPI OFF)
 set(GINKGO_HAS_CUDA OFF)
 set(GINKGO_HAS_SYCL OFF)
 set(GINKGO_HAS_HIP OFF)
+set(GINKGO_HAS_MUSA OFF)
 
 include(CheckLanguage)
 
@@ -35,6 +36,14 @@ if(NOT DEFINED GINKGO_BUILD_HIP)
     if(CMAKE_HIP_COMPILER)
         message(STATUS "Enabling HIP executor")
         set(GINKGO_HAS_HIP ON)
+    endif()
+endif()
+
+if(NOT DEFINED GINKGO_BUILD_MUSA)
+    find_program(MUSA_MCC_COMPILER mcc PATHS /usr/local/musa/bin ENV MUSA_HOME)
+    if(MUSA_MCC_COMPILER)
+        message(STATUS "Enabling MUSA executor")
+        set(GINKGO_HAS_MUSA ON)
     endif()
 endif()
 

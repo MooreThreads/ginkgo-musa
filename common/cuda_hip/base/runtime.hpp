@@ -10,6 +10,8 @@
 // nothing needed here
 #elif defined(GKO_COMPILING_HIP)
 #include <hip/hip_runtime.h>
+#elif defined(GKO_COMPILING_MUSA)
+#include <musa_runtime.h>
 #else
 #error "Executor definition missing"
 #endif

@@ -10,6 +10,8 @@
 #include "cuda/base/pointer_mode_guard.hpp"
 #elif defined(GKO_COMPILING_HIP)
 #include "hip/base/pointer_mode_guard.hip.hpp"
+#elif defined(GKO_COMPILING_MUSA)
+#include "musa/base/pointer_mode_guard.hpp"
 #else
 #error "Executor definition missing"
 #endif

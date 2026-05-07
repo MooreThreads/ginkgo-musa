@@ -17,6 +17,12 @@
 #include <cuda_fp16.h>
 
 
+#elif defined(GKO_COMPILING_MUSA)
+
+
+#include <musa_fp16.h>
+
+
 #elif defined(GKO_COMPILING_HIP)
 
 
@@ -92,6 +98,36 @@ struct device_numeric_limits<__nv_bfloat16> {
         __nv_bfloat16_raw bits;
         bits.x = static_cast<uint16>(0b0'00000001'0000000u);
         return __nv_bfloat16{bits};
+    }
+};
+
+
+#endif
+
+#if defined(GKO_COMPILING_MUSA)
+
+
+template <>
+struct device_numeric_limits<__mt_bfloat16> {
+    static GKO_ATTRIBUTES GKO_INLINE auto inf()
+    {
+        __mt_bfloat16_raw bits;
+        bits.x = static_cast<uint16>(0b0'11111111'0000000u);
+        return __mt_bfloat16{bits};
+    }
+
+    static GKO_ATTRIBUTES GKO_INLINE auto max()
+    {
+        __mt_bfloat16_raw bits;
+        bits.x = static_cast<uint16>(0b0'11111110'1111111u);
+        return __mt_bfloat16{bits};
+    }
+
+    static GKO_ATTRIBUTES GKO_INLINE auto min()
+    {
+        __mt_bfloat16_raw bits;
+        bits.x = static_cast<uint16>(0b0'00000001'0000000u);
+        return __mt_bfloat16{bits};
     }
 };
 
@@ -280,7 +316,7 @@ namespace gko {
 
 // It is required by NVHPC 23.3, `isnan` is undefined when NVHPC is used as a
 // host compiler.
-#if defined(__CUDACC__) || defined(GKO_COMPILING_HIP)
+#if defined(__CUDACC__) || defined(GKO_COMPILING_HIP) || defined(__MUSACC__)
 
 
 #if GINKGO_ENABLE_HALF
@@ -391,7 +427,7 @@ __device__ __forceinline__ bool is_finite(
 
 
 #endif  // GINKGO_ENABLE_BFLOAT16
-#endif  // defined(__CUDACC__) || defined(GKO_COMPILING_HIP)
+#endif  // defined(__CUDACC__) || defined(GKO_COMPILING_HIP) || defined(__MUSACC__)
 
 
 }  // namespace gko

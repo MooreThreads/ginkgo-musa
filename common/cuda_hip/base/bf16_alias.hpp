@@ -21,6 +21,21 @@ using vendor_bf16 = __nv_bfloat16;
 }
 
 
+#elif defined(GKO_COMPILING_MUSA)
+
+
+#include <musa_bf16.h>
+
+
+namespace gko {
+
+
+using vendor_bf16 = __mt_bfloat16;
+
+
+}
+
+
 #elif defined(GKO_COMPILING_HIP)
 
 

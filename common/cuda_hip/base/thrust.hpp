@@ -13,7 +13,8 @@
 
 
 #if defined(GKO_COMPILING_CUDA) || \
-    (defined(GKO_COMPILING_HIP) && !GINKGO_HIP_PLATFORM_HCC)
+    (defined(GKO_COMPILING_HIP) && !GINKGO_HIP_PLATFORM_HCC) || \
+    defined(GKO_COMPILING_MUSA)
 #include <thrust/system/cuda/detail/execution_policy.h>
 #else
 #include <thrust/system/hip/detail/execution_policy.h>
@@ -26,6 +27,11 @@ namespace GKO_DEVICE_NAMESPACE {
 
 
 #if defined(GKO_COMPILING_CUDA)
+inline auto thrust_policy(std::shared_ptr<const CudaExecutor> exec)
+{
+    return thrust::cuda::par.on(exec->get_stream());
+}
+#elif defined(GKO_COMPILING_MUSA)
 inline auto thrust_policy(std::shared_ptr<const CudaExecutor> exec)
 {
     return thrust::cuda::par.on(exec->get_stream());

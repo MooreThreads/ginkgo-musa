@@ -10,6 +10,8 @@
 #include "cuda/base/config.hpp"
 #elif defined(GKO_COMPILING_HIP)
 #include "hip/base/config.hip.hpp"
+#elif defined(GKO_COMPILING_MUSA)
+#include "musa/base/config.hpp"
 #else
 #error "Executor definition missing"
 #endif

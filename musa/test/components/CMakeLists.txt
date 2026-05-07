@@ -1,0 +1,4 @@
+ginkgo_create_musa_test(cooperative_groups)
+ginkgo_create_musa_test(merging)
+ginkgo_create_musa_test(searching)
+ginkgo_create_musa_test(sorting)

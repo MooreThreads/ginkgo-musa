@@ -10,6 +10,8 @@
 #include "cuda/components/memory.cuh"
 #elif defined(GKO_COMPILING_HIP)
 #include "hip/components/memory.hip.hpp"
+#elif defined(GKO_COMPILING_MUSA)
+#include "musa/components/memory.hpp"
 #else
 #error "Executor definition missing"
 #endif
