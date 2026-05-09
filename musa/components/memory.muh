@@ -6,6 +6,7 @@
 #define GKO_MUSA_COMPONENTS_MEMORY_CUH_
 
 
+#include <cstring>
 #include <type_traits>
 
 #include <ginkgo/core/base/math.hpp>
@@ -18,7 +19,205 @@ namespace kernels {
 namespace musa {
 
 
-#include "common/cuda_hip/components/memory.mtidia.hpp.inc"
+template <typename ValueType>
+__device__ __forceinline__ ValueType load_relaxed(const ValueType* ptr)
+{
+    const volatile ValueType* vptr = ptr;
+    return *vptr;
+}
+
+template <typename ValueType>
+__device__ __forceinline__ ValueType load_relaxed_shared(const ValueType* ptr)
+{
+    return load_relaxed(ptr);
+}
+
+template <typename ValueType>
+__device__ __forceinline__ ValueType load_relaxed_local(const ValueType* ptr)
+{
+    return load_relaxed(ptr);
+}
+
+template <typename ValueType>
+__device__ __forceinline__ ValueType load_acquire(const ValueType* ptr)
+{
+    const volatile ValueType* vptr = ptr;
+    ValueType result = *vptr;
+    __threadfence();
+    return result;
+}
+
+template <typename ValueType>
+__device__ __forceinline__ ValueType load_acquire_shared(const ValueType* ptr)
+{
+    return load_acquire(ptr);
+}
+
+template <typename ValueType>
+__device__ __forceinline__ ValueType load_acquire_local(const ValueType* ptr)
+{
+    return load_acquire(ptr);
+}
+
+template <typename ValueType>
+__device__ __forceinline__ void store_relaxed(ValueType* ptr, ValueType value)
+{
+    volatile ValueType* vptr = ptr;
+    *vptr = value;
+}
+
+template <typename ValueType>
+__device__ __forceinline__ void store_relaxed_shared(ValueType* ptr,
+                                                     ValueType value)
+{
+    store_relaxed(ptr, value);
+}
+
+template <typename ValueType>
+__device__ __forceinline__ void store_relaxed_local(ValueType* ptr,
+                                                    ValueType value)
+{
+    store_relaxed(ptr, value);
+}
+
+template <typename ValueType>
+__device__ __forceinline__ void store_release(ValueType* ptr, ValueType value)
+{
+    __threadfence();
+    volatile ValueType* vptr = ptr;
+    *vptr = value;
+}
+
+template <typename ValueType>
+__device__ __forceinline__ void store_release_shared(ValueType* ptr,
+                                                     ValueType value)
+{
+    store_release(ptr, value);
+}
+
+template <typename ValueType>
+__device__ __forceinline__ void store_release_local(ValueType* ptr,
+                                                    ValueType value)
+{
+    store_release(ptr, value);
+}
+
+template <typename ValueType, typename AddType>
+__device__ __forceinline__ ValueType atomic_add_relaxed(ValueType* ptr,
+                                                        AddType value)
+{
+    return atomicAdd(ptr, static_cast<ValueType>(value));
+}
+
+template <>
+__device__ __forceinline__ int64 atomic_add_relaxed<int64, int64>(int64* ptr,
+                                                                   int64 value)
+{
+    return atomicAdd(reinterpret_cast<unsigned long long*>(ptr),
+                     static_cast<unsigned long long>(value));
+}
+
+template <typename ValueType>
+__device__ __forceinline__ ValueType atomic_min_relaxed(ValueType* ptr,
+                                                        ValueType value)
+{
+    return atomicMin(ptr, value);
+}
+
+template <typename ValueType>
+__device__ __forceinline__ ValueType atomic_min_relaxed_shared(ValueType* ptr,
+                                                               ValueType value)
+{
+    return atomicMin(ptr, value);
+}
+
+template <typename ValueType>
+__device__ __forceinline__ ValueType atomic_min_relaxed_local(ValueType* ptr,
+                                                              ValueType value)
+{
+    return atomicMin(ptr, value);
+}
+
+template <typename ValueType>
+__device__ __forceinline__ ValueType atomic_cas_relaxed(ValueType* ptr,
+                                                        ValueType old_val,
+                                                        ValueType new_val)
+{
+    return atomicCAS(ptr, old_val, new_val);
+}
+
+template <typename ValueType>
+__device__ __forceinline__ ValueType atomic_cas_relaxed_shared(ValueType* ptr,
+                                                               ValueType old_val,
+                                                               ValueType new_val)
+{
+    return atomicCAS(ptr, old_val, new_val);
+}
+
+template <typename ValueType>
+__device__ __forceinline__ ValueType atomic_cas_relaxed_local(ValueType* ptr,
+                                                              ValueType old_val,
+                                                              ValueType new_val)
+{
+    return atomicCAS(ptr, old_val, new_val);
+}
+
+template <typename ValueType>
+__device__ __forceinline__ thrust::complex<ValueType> load_relaxed(
+    const thrust::complex<ValueType>* ptr)
+{
+    auto real_ptr = reinterpret_cast<const ValueType*>(ptr);
+    auto real = load_relaxed(real_ptr);
+    auto imag = load_relaxed(real_ptr + 1);
+    return {real, imag};
+}
+
+template <typename ValueType>
+__device__ __forceinline__ thrust::complex<ValueType> load_relaxed_shared(
+    const thrust::complex<ValueType>* ptr)
+{
+    auto real_ptr = reinterpret_cast<const ValueType*>(ptr);
+    auto real = load_relaxed_shared(real_ptr);
+    auto imag = load_relaxed_shared(real_ptr + 1);
+    return {real, imag};
+}
+
+template <typename ValueType>
+__device__ __forceinline__ thrust::complex<ValueType> load_relaxed_local(
+    const thrust::complex<ValueType>* ptr)
+{
+    auto real_ptr = reinterpret_cast<const ValueType*>(ptr);
+    auto real = load_relaxed_local(real_ptr);
+    auto imag = load_relaxed_local(real_ptr + 1);
+    return {real, imag};
+}
+
+template <typename ValueType>
+__device__ __forceinline__ void store_relaxed(thrust::complex<ValueType>* ptr,
+                                              thrust::complex<ValueType> value)
+{
+    auto real_ptr = reinterpret_cast<ValueType*>(ptr);
+    store_relaxed(real_ptr, value.real());
+    store_relaxed(real_ptr + 1, value.imag());
+}
+
+template <typename ValueType>
+__device__ __forceinline__ void store_relaxed_shared(
+    thrust::complex<ValueType>* ptr, thrust::complex<ValueType> value)
+{
+    auto real_ptr = reinterpret_cast<ValueType*>(ptr);
+    store_relaxed_shared(real_ptr, value.real());
+    store_relaxed_shared(real_ptr + 1, value.imag());
+}
+
+template <typename ValueType>
+__device__ __forceinline__ void store_relaxed_local(
+    thrust::complex<ValueType>* ptr, thrust::complex<ValueType> value)
+{
+    auto real_ptr = reinterpret_cast<ValueType*>(ptr);
+    store_relaxed_local(real_ptr, value.real());
+    store_relaxed_local(real_ptr + 1, value.imag());
+}
 
 
 }  // namespace musa

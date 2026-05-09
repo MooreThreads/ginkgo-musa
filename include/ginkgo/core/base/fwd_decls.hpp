@@ -9,13 +9,21 @@
 #include <ginkgo/config.hpp>
 
 
-struct cublasContext;
-
-struct cusparseContext;
-
+#if defined(GKO_COMPILING_MUSA)
+struct MUstream_st;
+struct MUevent_st;
+typedef struct MUstream_st CUstream_st;
+typedef struct MUevent_st CUevent_st;
+struct _mublasHandle_t;
+typedef struct _mublasHandle_t cublasContext;
+struct _musparse_handle;
+typedef struct _musparse_handle cusparseContext;
+#else
 struct CUstream_st;
-
 struct CUevent_st;
+struct cublasContext;
+struct cusparseContext;
+#endif
 
 struct hipblasContext;
 

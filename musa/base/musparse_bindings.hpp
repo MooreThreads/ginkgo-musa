@@ -383,7 +383,7 @@ inline void destroy(musparseSpGEMMDescr_t info)
 
 
 template <typename ValueType>
-inline musparseDnVecDescr_t create_dmtec(int64 size, ValueType* values)
+inline musparseDnVecDescr_t create_dnvec(int64 size, ValueType* values)
 {
     musparseDnVecDescr_t descr{};
     constexpr auto value_type = musa_data_type<ValueType>();
@@ -803,7 +803,7 @@ void ilu0_buffer_size(musparseHandle_t handle, IndexType m, IndexType nnz,
         const int32* row_ptrs, const int32* col_idxs, musparseMatInfo_t info,   \
         size_type& buffer_size)                                              \
     {                                                                        \
-        int tmp_buffer_size{};                                               \
+        size_t tmp_buffer_size{};                                            \
         GKO_ASSERT_NO_CUSPARSE_ERRORS(                                       \
             CusparseName(handle, m, nnz, descr,                              \
                          as_culibs_type(const_cast<ValueType*>(vals)),       \
@@ -840,8 +840,10 @@ void ilu0_analysis(musparseHandle_t handle, IndexType m, IndexType nnz,
         musparseSolvePolicy_t policy, void* buffer)                          \
     {                                                                        \
         GKO_ASSERT_NO_CUSPARSE_ERRORS(                                       \
-            CusparseName(handle, m, nnz, descr, as_culibs_type(vals),        \
-                         row_ptrs, col_idxs, info, policy, buffer));         \
+            CusparseName(handle, m, nnz, descr,                              \
+                         as_culibs_type(const_cast<ValueType*>(vals)),       \
+                         row_ptrs, col_idxs, info,                           \
+                         MUSPARSE_ANALYSIS_POLICY_FORCE, policy, buffer));   \
     }                                                                        \
     static_assert(true,                                                      \
                   "This assert is used to counter the false positive extra " \
@@ -903,7 +905,7 @@ void ic0_buffer_size(musparseHandle_t handle, IndexType m, IndexType nnz,
         const int32* row_ptrs, const int32* col_idxs, csric02Info_t info,    \
         size_type& buffer_size)                                              \
     {                                                                        \
-        int tmp_buffer_size{};                                               \
+        size_t tmp_buffer_size{};                                            \
         GKO_ASSERT_NO_CUSPARSE_ERRORS(                                       \
             CusparseName(handle, m, nnz, descr,                              \
                          as_culibs_type(const_cast<ValueType*>(vals)),       \
@@ -1005,6 +1007,31 @@ using namespace cusparse;
 }  // namespace musa
 }  // namespace kernels
 }  // namespace gko
+
+#ifdef GKO_COMPILING_MUSA
+using cusparseOperation_t = musparseOperation_t;
+using cusparseSpMMAlg_t = musparseSpMMAlg_t;
+using cusparseAction_t = musparseAction_t;
+using cusparseIndexBase_t = musparseIndexBase_t;
+using cusparseCsr2CscAlg_t = musparseCsr2CscAlg_t;
+using cudaDataType_t = musaDataType_t;
+#define CUSPARSE_CSRMV_ALG1 MUSPARSE_SPMV_CSR_ALG1
+#define CUSPARSE_SPMM_CSR_ALG2 MUSPARSE_SPMM_CSR_ALG2
+#define CUSPARSE_ACTION_NUMERIC MUSPARSE_ACTION_NUMERIC
+#define CUSPARSE_INDEX_BASE_ZERO MUSPARSE_INDEX_BASE_ZERO
+#define CUSPARSE_CSR2CSC_ALG1 MUSPARSE_CSR2CSC_ALG1
+namespace gko {
+namespace kernels {
+namespace musa {
+template <typename T>
+constexpr musaDataType_t cuda_data_type()
+{
+    return musa_data_type<T>();
+}
+}  // namespace musa
+}  // namespace kernels
+}  // namespace gko
+#endif
 
 
 #endif  // GKO_MUSA_BASE_CUSPARSE_BINDINGS_HPP_

@@ -15,7 +15,9 @@
 #include <ginkgo/core/base/half.hpp>
 
 
+#if !defined(GKO_COMPILING_MUSA)
 class __nv_bfloat16;
+#endif
 class hip_bfloat16;
 class __hip_bfloat16;
 class __mt_bfloat16;
@@ -37,6 +39,7 @@ struct basic_float_traits<bfloat16> {
     static constexpr bool rounds_to_nearest = true;
 };
 
+#if !defined(GKO_COMPILING_MUSA)
 template <>
 struct basic_float_traits<__nv_bfloat16> {
     using type = __nv_bfloat16;
@@ -45,6 +48,7 @@ struct basic_float_traits<__nv_bfloat16> {
     static constexpr int exponent_bits = 8;
     static constexpr bool rounds_to_nearest = true;
 };
+#endif
 
 template <>
 struct basic_float_traits<hip_bfloat16> {

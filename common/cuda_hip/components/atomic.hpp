@@ -157,11 +157,11 @@ GKO_BIND_ATOMIC_ADD(double);
 GKO_BIND_ATOMIC_ADD(__half);
 #endif  // !(defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 700))
 
-#if !(defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800))
+#if !(defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800)) && !defined(GKO_COMPILING_MUSA)
 // CUDA supports 16-bit __nv_bfloat16 floating-point atomicAdd on devices
 // of compute capability 8.x and higher.
 GKO_BIND_ATOMIC_ADD(__nv_bfloat16);
-#endif  // !(defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800))
+#endif  // !(defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800)) && !defined(GKO_COMPILING_MUSA)
 
 
 #if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 700
@@ -178,9 +178,11 @@ GKO_BIND_ATOMIC_ADD(__nv_bfloat16);
 // implementation for atomic operation. This is only for the compilation purpose
 // and the implementation should not rely on this to throw an error.
 GKO_BIND_UNSUPPORTED_ATOMIC_ADD(__half);
+#if !defined(GKO_COMPILING_MUSA)
 // compute capability 7.x and higher already supported 16-bit atomicCAS, so
 // __nv_bfloat16 can also rely on it before compute capability 8.x.
 GKO_BIND_UNSUPPORTED_ATOMIC_ADD(__nv_bfloat16);
+#endif
 
 #undef GKO_BIND_UNSUPPORTED_ATOMIC_ADD
 #endif  // defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 700
@@ -194,8 +196,8 @@ GKO_BIND_UNSUPPORTED_ATOMIC_ADD(__nv_bfloat16);
 GKO_BIND_ATOMIC_ADD(__half2);
 #endif  // !(defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 600))
 
-#if !(defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800)) || \
-    !(defined(CUDA_VERSION) && CUDA_VERSION < 12020)
+#if (!(defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 800)) || \
+    !(defined(CUDA_VERSION) && CUDA_VERSION < 12020)) && !defined(GKO_COMPILING_MUSA)
 // CUDA supports 32-bit __half2 floating-point atomicAdd natively on
 // devices of compute capability 8.x and higher or cuda version is later
 // than 12.2. note: The atomicity of the

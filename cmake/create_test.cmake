@@ -122,12 +122,12 @@ function(ginkgo_add_resource_requirement test_name)
         endif()
 
         set(single_resource "cpu:${add_rr_RESOURCE_LOCAL_CORES}")
-    elseif(add_rr_RESOURCE_TYPE MATCHES "^(cudagpu|hipgpu|sycl)$")
+    elseif(add_rr_RESOURCE_TYPE MATCHES "^(cudagpu|hipgpu|musagpu|sycl)$")
         set(single_resource "${add_rr_RESOURCE_TYPE}:1")
     else()
         message(
             FATAL_ERROR
-            "Unrecognized resource type ${add_rr_RESOURCE_TYPE}, allowed are: cpu, cudagpu, hipgpu, sycl."
+            "Unrecognized resource type ${add_rr_RESOURCE_TYPE}, allowed are: cpu, cudagpu, hipgpu, musagpu, sycl."
         )
     endif()
 
@@ -346,6 +346,84 @@ function(ginkgo_create_hip_test_internal test_name filename test_target_name)
     )
 endfunction(ginkgo_create_hip_test_internal)
 
+## Test compiled with MUSA (mcc)
+function(ginkgo_create_musa_test test_name)
+    ginkgo_build_test_name(${test_name} test_target_name ${ARGN})
+    ginkgo_create_musa_test_internal(
+        ${test_name}
+        ${test_name}.mu
+        ${test_target_name}
+        ${ARGN}
+    )
+endfunction(ginkgo_create_musa_test)
+
+## Internal function allowing separate test name, filename and target name for MUSA
+function(ginkgo_create_musa_test_internal test_name filename test_target_name)
+    cmake_parse_arguments(
+        PARSE_ARGV
+        3
+        musa_test
+        ""
+        "${gko_test_single_args}"
+        "${gko_test_multi_args}"
+    )
+    # Get absolute path of source
+    if(NOT IS_ABSOLUTE "${filename}")
+        set(_src "${CMAKE_CURRENT_SOURCE_DIR}/${filename}")
+    else()
+        set(_src "${filename}")
+    endif()
+    # Create unique object name
+    file(RELATIVE_PATH _rel "${PROJECT_SOURCE_DIR}" "${_src}")
+    string(REPLACE "/" "_" _obj_name "${_rel}")
+    string(REGEX REPLACE "\\.[^.]+$" ".o" _obj_name "${_obj_name}")
+    set(_obj "${CMAKE_CURRENT_BINARY_DIR}/musa_test_objs/${_obj_name}")
+
+    get_filename_component(_ext "${_src}" EXT)
+    set(_extra_flags "")
+    if(_ext STREQUAL ".cpp")
+        set(_extra_flags -x cuda)
+    endif()
+
+    # Compile with mcc
+    add_custom_command(
+        OUTPUT "${_obj}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/musa_test_objs"
+        COMMAND ${MUSA_MCC_EXECUTABLE}
+            -mtgpu --cuda-gpu-arch=mp_${MUSA_ARCH}
+            -std=c++17 -O2 -fPIC
+            -DGKO_COMPILING_MUSA -DGKO_DEVICE_NAMESPACE=musa
+            -I${MUSA_INCLUDE_DIRS}
+            -I${PROJECT_SOURCE_DIR}
+            -I${PROJECT_SOURCE_DIR}/include
+            -I${PROJECT_BINARY_DIR}/include
+            -I${CMAKE_CURRENT_SOURCE_DIR}
+            -I${CMAKE_CURRENT_BINARY_DIR}
+            ${_extra_flags}
+            -c "${_src}" -o "${_obj}"
+        DEPENDS "${_src}"
+        COMMENT "MUSA test: ${_rel}"
+        VERBATIM
+    )
+
+    # Create executable from object file
+    add_executable(${test_target_name} ${PROJECT_SOURCE_DIR}/cmake/musa_test_stub.cpp)
+    target_link_libraries(${test_target_name} PRIVATE "${_obj}")
+    target_compile_definitions(
+        ${test_target_name}
+        PRIVATE GKO_COMPILING_MUSA GKO_DEVICE_NAMESPACE=musa
+    )
+    target_include_directories(${test_target_name} PRIVATE ${MUSA_INCLUDE_DIRS})
+    target_link_libraries(${test_target_name} PRIVATE ${MUSA_LIBRARIES})
+    ginkgo_set_test_target_properties(${test_target_name} "_musa" ${ARGN})
+    ginkgo_add_test(
+        ${test_name}
+        ${test_target_name}
+        ${ARGN}
+        RESOURCE_TYPE musagpu
+    )
+endfunction(ginkgo_create_musa_test_internal)
+
 ## Test compiled with OpenMP
 function(ginkgo_create_omp_test test_name)
     ginkgo_build_test_name(${test_name} test_target_name ${ARGN})
@@ -394,6 +472,14 @@ function(ginkgo_create_common_test test_name)
             ${ARGN}
         )
     endif()
+    if(GINKGO_BUILD_MUSA)
+        ginkgo_create_common_test_internal(
+            ${test_name}
+            CudaExecutor
+            musa
+            ${ARGN}
+        )
+    endif()
 endfunction(ginkgo_create_common_test)
 
 function(ginkgo_create_common_test_internal test_name exec_type exec)
@@ -416,6 +502,8 @@ function(ginkgo_create_common_test_internal test_name exec_type exec)
         set(test_resource_type cudagpu)
     elseif(exec STREQUAL hip)
         set(test_resource_type hipgpu)
+    elseif(exec STREQUAL musa)
+        set(test_resource_type musagpu)
     else()
         set(test_resource_type sycl)
     endif()
@@ -542,6 +630,22 @@ function(ginkgo_create_common_device_test test_name)
         target_compile_definitions(
             ${test_target_name}_hip
             PRIVATE EXEC_TYPE=HipExecutor GKO_DEVICE_NAMESPACE=hip
+        )
+    endif()
+    if(
+        GINKGO_BUILD_MUSA
+        AND NOT ("musa" IN_LIST common_device_test_DISABLE_EXECUTORS)
+    )
+        configure_file(${test_name}.cpp ${test_name}.mu @ONLY)
+        ginkgo_create_musa_test_internal(
+            ${test_name}_musa
+            ${CMAKE_CURRENT_BINARY_DIR}/${test_name}.mu
+            ${test_target_name}_musa
+            ${ARGN}
+        )
+        target_compile_definitions(
+            ${test_target_name}_musa
+            PRIVATE EXEC_TYPE=CudaExecutor GKO_DEVICE_NAMESPACE=musa
         )
     endif()
 endfunction(ginkgo_create_common_device_test)

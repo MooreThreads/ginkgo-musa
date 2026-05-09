@@ -13,9 +13,10 @@
 
 
 #if defined(GKO_COMPILING_CUDA) || \
-    (defined(GKO_COMPILING_HIP) && !GINKGO_HIP_PLATFORM_HCC) || \
-    defined(GKO_COMPILING_MUSA)
+    (defined(GKO_COMPILING_HIP) && !GINKGO_HIP_PLATFORM_HCC)
 #include <thrust/system/cuda/detail/execution_policy.h>
+#elif defined(GKO_COMPILING_MUSA)
+#include <thrust/system/musa/detail/execution_policy.h>
 #else
 #include <thrust/system/hip/detail/execution_policy.h>
 #endif
@@ -34,7 +35,7 @@ inline auto thrust_policy(std::shared_ptr<const CudaExecutor> exec)
 #elif defined(GKO_COMPILING_MUSA)
 inline auto thrust_policy(std::shared_ptr<const CudaExecutor> exec)
 {
-    return thrust::cuda::par.on(exec->get_stream());
+    return thrust::musa::par.on(exec->get_stream());
 }
 #elif defined(GKO_COMPILING_HIP)
 inline auto thrust_policy(std::shared_ptr<const HipExecutor> exec)

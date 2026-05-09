@@ -1,4 +1,4 @@
-# Ginkgo MUSA 迁移报告
+# Ginkgo MUSA 迁移报告（更新版）
 
 ## 项目概述
 
@@ -14,54 +14,86 @@
 | `official-ginkgo` | 官方源码（基于 develop 分支） |
 | `musa-ginkgo` | MUSA 迁移分支 |
 
-## 迁移范围
+## 迁移进度
 
-### 已完成的工作
+### 第一轮迁移（已完成）
 
-1. **创建 `musa/` 后端目录**（60 个文件）
-   - 基于 `cuda/` 目录使用 Python 脚本（`simple_porting_ginkgo.py`）自动转换
-   - CUDA API → MUSA API 替换（cudaMalloc→musaMalloc, cublas→mublas 等）
-   - 文件重命名（`.cu`→`.mu`, `cublas_bindings.hpp`→`mublas_bindings.hpp` 等）
-   - 头文件路径更新
+1. 创建 `musa/` 后端目录（60个文件），基于CUDA自动转换
+2. 修改 `common/cuda_hip/` 共享代码层（dispatcher头文件）
+3. CMake 构建系统（musa.cmake, autodetect, CMakeLists.txt）
+4. 核心库适配（exception_helpers, bfloat16, musparse compat）
 
-2. **修改 `common/cuda_hip/` 共享代码层**
-   - 9 个 dispatcher 头文件添加 `#elif defined(GKO_COMPILING_MUSA)` 分支
-   - `thrust.hpp` 添加 MUSA thrust 策略
-   - `math.hpp` 添加 `__mt_bfloat16` 设备数值极限
-   - `bf16_alias.hpp` 添加 MUSA bfloat16 类型别名
-   - `sorting.hpp` MUSA 与 CUDA 共享 `__shfl_xor_sync` 路径
+### 第二轮迁移（本次完成）
 
-3. **CMake 构建系统**
-   - `cmake/musa.cmake`: MUSA SDK 发现、mcc 编译函数
-   - `cmake/autodetect_executors.cmake`: 添加 MUSA 自动检测
-   - `CMakeLists.txt`: 添加 `GINKGO_BUILD_MUSA` 选项
-   - `musa/CMakeLists.txt`: MUSA 后端构建脚本（使用自定义 mcc 编译）
-   - `devices/musa/`: 设备 executor 对象库
+1. **CMake 测试框架**
+   - `cmake/create_test.cmake`: 添加 `musagpu` 资源类型
+   - 添加 `ginkgo_create_musa_test` 和 `ginkgo_create_musa_test_internal` 函数
+   - 添加 MUSA 到 `ginkgo_create_common_test` 和 `ginkgo_create_common_device_test`
 
-4. **核心库适配**
-   - `include/ginkgo/core/base/exception_helpers.hpp`: 添加 MUSA 错误检查宏
-   - `include/ginkgo/core/base/bfloat16.hpp`: 添加 `__mt_bfloat16` 前向声明和 traits
-   - `musa/base/musparse_compat.hpp`: musparse API 兼容层
+2. **Thrust 适配**
+   - `common/cuda_hip/base/thrust.hpp`: MUSA 使用 `thrust::musa::par` 而非 `thrust::cuda::par`
+   - 引入 `thrust/system/musa/detail/execution_policy.h`
 
-### 待完成的工作
+3. **CUstream/CUevent 类型兼容**
+   - `include/ginkgo/core/base/fwd_decls.hpp`: MUSA 下 typedef `CUstream_st` = `MUstream_st`，`CUevent_st` = `MUevent_st`
+   - 同时 typedef `cublasContext` = `_mublasHandle_t`，`cusparseContext` = `_musparse_handle`
 
-| 问题 | 原因 | 建议修复方案 |
-|------|------|------------|
-| musparse API 不完全兼容 | MUSA 缺少 `musparseCsr2cscEx2`、`musparseSpGEMMDescr_t` 等 | 需要为缺失 API 实现真正的转换函数（用 musparseXcsr2csc 替代 Csr2cscEx2） |
-| Stream 类型不兼容 | `CUstream_st*` vs `musaStream_t`(MUstream_st*) | 在 musa 后端中用 `reinterpret_cast` 转换，或修改 core 添加 MUSA stream 类型支持 |
-| thrust complex 模板特化 | MUSA thrust target attribute 不匹配 | 为 MUSA 提供独立的半精度 thrust 特化或禁用半精度 |
-| bfloat16 类型差异 | CUDA 用 `__nv_bfloat16`，MUSA 用 `__mt_bfloat16` | 已部分修复，需要更完整的转换支持 |
-| general.json 误替换 | `environment` 被替换为 `emtironment` 等 | 已手动修复，需要在 porting 脚本中添加更多保护字符串 |
+4. **内核编译修复**
+   - `include/ginkgo/core/base/types.hpp`: 添加 `__MUSACC__` 到 `GKO_ATTRIBUTES` 宏
+   - `include/ginkgo/core/base/abstract_factory.hpp`: 添加 `__MUSACC__` 检查
+   - `cmake/musa.cmake`: 修复 `get_filename_component` 使用 `LAST_EXT` 替代 `EXT`
+
+5. **内核声明宏**
+   - `core/base/kernel_declaration.hpp`: 在 `GKO_DECLARE_FOR_ALL_EXECUTOR_NAMESPACES` 宏中添加 `musa` 命名空间
+   - `include/ginkgo/core/base/executor.hpp`: 添加 `musa::DefaultExecutor` 别名
+
+6. **统一内核启动**
+   - `common/unified/base/kernel_launch.hpp`: 添加 `GKO_COMPILING_MUSA` 分支
+   - `common/unified/base/kernel_launch_reduction.hpp`: 同上
+   - `common/unified/base/kernel_launch_solver.hpp`: 同上
+
+7. **批量求解器调度**
+   - `core/solver/batch_dispatch.hpp`: 添加 `GKO_COMPILING_MUSA` 分支，使用 `musa` 命名空间
+
+8. **musparse API 修复**
+   - ILU0/IC0 buffer_size: `int*` → `size_t*`
+   - ILU0/IC0 analysis: 添加 `musparseAnalysisPolicy_t` 参数
+   - ILU0/IC0 analysis: `const_cast` 去除 vals 的 const 限定
+   - 移除冲突的 compat 层（MUSA SDK 已原生支持 SpGEMM/Csr2CscEx2）
+   - 添加 CUDA→MUSA 类型别名和常量映射
+
+9. **内存操作**
+   - `musa/components/memory.muh`: 完全重写，使用 volatile 读写替代 NVIDIA PTX assembly
+   - 添加 `atomic_cas_relaxed`, `atomic_min_relaxed` 等原子操作
+
+10. **其他修复**
+    - `musa/base/stream.cpp`: 修复类名 `musa_stream` → `cuda_stream`
+    - `musa/base/timer.cpp`: 修复 `time_point::type::musa` → `cuda`
+    - `musa/base/version.cpp`: 修复函数名 `get_musa_version` → `get_cuda_version`
+    - `musa/base/mtprofile.cpp`: NVTX profiling 改为 no-op（MUSA 无等效 API）
+    - `musa/matrix/fft_kernels.mu`: `mufftMakePlanMany64` → `mufftMakePlanMany`
+    - `musa/base/musparse_bindings.hpp`: 修复 `create_dmtec` → `create_dnvec`
+    - `include/ginkgo/core/base/bfloat16.hpp`: MUSA 下不声明 `__nv_bfloat16`
+    - `common/cuda_hip/components/atomic.hpp`: MUSA 下排除 `__nv_bfloat16` 特化
+    - 修复 dispatcher 中 `.hpp` → `.muh` 引用
+
+## 当前编译状态
+
+大部分 MUSA 后端文件成功编译。以下文件仍有编译问题：
+
+| 文件 | 错误原因 | 严重程度 |
+|------|----------|----------|
+| csr_kernels.instantiate.33-36 | mcc 编译器 SIGSEGV（模板过大） | 高 |
+| fbcsr_kernels.instantiate.0-2 | mcc 编译器 SIGSEGV（模板过大） | 高 |
+| sparsity_csr_kernels | musparse_block_bindings.hpp API 差异 | 中 |
+| rcm_kernels | musparse_block_bindings.hpp API 差异 | 中 |
+| lower/upper_trs_kernels | common_trs_kernels.muh SpSM API 差异 | 中 |
+| executor.cpp | intrinsics.hpp 中 __builtin 不匹配 | 低 |
+| csr_kernels (unified) | 某些 sparselib 函数签名差异 | 中 |
 
 ## 编译命令
 
 ```bash
-# 环境要求
-# - MUSA SDK (mcc >= 4.3.6) 安装在 /usr/local/musa
-# - CMake >= 3.18
-# - GCC >= 11
-
-# 配置（仅 MUSA + Reference）
 mkdir build && cd build
 cmake .. \
   -DGINKGO_BUILD_CUDA=OFF \
@@ -72,43 +104,17 @@ cmake .. \
   -DGINKGO_BUILD_OMP=ON \
   -DGINKGO_ENABLE_HALF=OFF \
   -DGINKGO_ENABLE_BFLOAT16=OFF \
-  -DGINKGO_BUILD_TESTS=OFF \
+  -DGINKGO_BUILD_TESTS=ON \
   -DGINKGO_BUILD_EXAMPLES=OFF \
   -DCMAKE_BUILD_TYPE=Release \
   -DMUSA_ARCH=22
 
-# 编译
 cmake --build . -j$(nproc)
-
-# 注意: 当前 MUSA 后端编译尚需进一步修复 musparse 绑定
-# Core + Reference + OMP 可以正常编译和测试
 ```
 
-## 技术难点分析
+## 待解决问题
 
-1. **Ginkgo 架构与 MUSA 适配**
-   - Ginkgo 的 `CudaExecutor` 深度集成在 core 库中，使用 CUDA 特有类型（`CUstream_st*`, `cublasContext*` 等）
-   - 理想方案是新增 `MUSAExecutor` 类（类似 `HipExecutor`），但需要修改大量 core 代码
-   - 当前方案复用 `CudaExecutor` 并在实现中调用 MUSA API
-
-2. **musparse API 差异显著**
-   - cusparse SpGEMM 使用 descriptor pattern（create/work_estimation/compute/copy/destroy）
-   - musparse SpGEMM 使用 stage 参数的单函数 pattern
-   - Csr2Csc: cusparse 有通用 `Csr2cscEx2`，musparse 只有类型特定的 `musparseXcsr2csc`
-
-3. **mcc 编译器限制**
-   - CMake 3.22 不支持 mcc 作为 CUDA 编译器（需要 nvcc 检测）
-   - 使用 `add_custom_command` 绕过，但增加了构建复杂度
-   - mcc 在编译大模板文件时内存消耗大（容易 OOM/segfault）
-
-## 文件统计
-
-| 类别 | 文件数 |
-|------|--------|
-| 新增 musa/ 后端文件 | 60 |
-| 修改 common/cuda_hip/ 文件 | 13 |
-| 修改 cmake 构建文件 | 4 |
-| 修改 include/ 核心头文件 | 2 |
-| 修改 devices/ 文件 | 2 |
-| SimplePorting 脚本 | 1 |
-| **总计修改/新增** | **82** |
+1. **mcc 编译器崩溃**: CSR/FBCSR 大型模板实例化文件导致 mcc SIGSEGV，需要拆分实例化或升级 mcc
+2. **musparse block bindings**: `musparseXbsrsv2_bufferSize` 等 BSR 稀疏 API 签名差异
+3. **SpSM (Sparse Triangular Solve)**: `musparseSpSM_analysis` API 参数差异
+4. **__builtin 内置函数**: MUSA 的 clang 14 基础与 GCC 12 的一些内置函数声明不兼容

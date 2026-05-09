@@ -23,24 +23,24 @@ CudaTimer::CudaTimer(std::shared_ptr<const CudaExecutor> exec)
 void CudaTimer::init_time_point(time_point& time)
 {
     detail::musa_scoped_device_id_guard guard{device_id_};
-    time.type_ = time_point::type::musa;
-    GKO_ASSERT_NO_CUDA_ERRORS(musaEventCreate(&time.data_.musa_event));
+    time.type_ = time_point::type::cuda;
+    GKO_ASSERT_NO_CUDA_ERRORS(musaEventCreate(&time.data_.cuda_event));
 }
 
 
 void CudaTimer::record(time_point& time)
 {
     detail::musa_scoped_device_id_guard guard{device_id_};
-    GKO_ASSERT(time.type_ == time_point::type::musa);
-    GKO_ASSERT_NO_CUDA_ERRORS(musaEventRecord(time.data_.musa_event, stream_));
+    GKO_ASSERT(time.type_ == time_point::type::cuda);
+    GKO_ASSERT_NO_CUDA_ERRORS(musaEventRecord(time.data_.cuda_event, stream_));
 }
 
 
 void CudaTimer::wait(time_point& time)
 {
     detail::musa_scoped_device_id_guard guard{device_id_};
-    GKO_ASSERT(time.type_ == time_point::type::musa);
-    GKO_ASSERT_NO_CUDA_ERRORS(musaEventSynchronize(time.data_.musa_event));
+    GKO_ASSERT(time.type_ == time_point::type::cuda);
+    GKO_ASSERT_NO_CUDA_ERRORS(musaEventSynchronize(time.data_.cuda_event));
 }
 
 
@@ -48,12 +48,12 @@ std::chrono::nanoseconds CudaTimer::difference_async(const time_point& start,
                                                      const time_point& stop)
 {
     detail::musa_scoped_device_id_guard guard{device_id_};
-    GKO_ASSERT(start.type_ == time_point::type::musa);
-    GKO_ASSERT(stop.type_ == time_point::type::musa);
-    GKO_ASSERT_NO_CUDA_ERRORS(musaEventSynchronize(stop.data_.musa_event));
+    GKO_ASSERT(start.type_ == time_point::type::cuda);
+    GKO_ASSERT(stop.type_ == time_point::type::cuda);
+    GKO_ASSERT_NO_CUDA_ERRORS(musaEventSynchronize(stop.data_.cuda_event));
     float ms{};
-    GKO_ASSERT_NO_CUDA_ERRORS(musaEventElapsedTime(&ms, start.data_.musa_event,
-                                                   stop.data_.musa_event));
+    GKO_ASSERT_NO_CUDA_ERRORS(musaEventElapsedTime(&ms, start.data_.cuda_event,
+                                                   stop.data_.cuda_event));
     return std::chrono::nanoseconds{static_cast<int64>(ms * double{1e6})};
 }
 

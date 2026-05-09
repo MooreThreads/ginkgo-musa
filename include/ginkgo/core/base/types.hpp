@@ -28,7 +28,7 @@
 
 
 // Macros for handling different compilers / architectures uniformly
-#if defined(__CUDACC__) || defined(__HIPCC__)
+#if defined(__CUDACC__) || defined(__HIPCC__) || defined(__MUSACC__)
 #define GKO_ATTRIBUTES __host__ __device__
 #define GKO_INLINE __forceinline__
 #define GKO_RESTRICT __restrict__
@@ -36,7 +36,7 @@
 #define GKO_ATTRIBUTES
 #define GKO_INLINE inline
 #define GKO_RESTRICT
-#endif  // defined(__CUDACC__) || defined(__HIPCC__)
+#endif  // defined(__CUDACC__) || defined(__HIPCC__) || defined(__MUSACC__)
 
 
 // Macros for handling different device error return types uniformly

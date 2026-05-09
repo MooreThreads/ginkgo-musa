@@ -1774,6 +1774,9 @@ namespace kernels {
 namespace cuda {
 using DefaultExecutor = CudaExecutor;
 }  // namespace cuda
+namespace musa {
+using DefaultExecutor = CudaExecutor;
+}  // namespace musa
 }  // namespace kernels
 
 

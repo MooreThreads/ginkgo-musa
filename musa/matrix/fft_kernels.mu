@@ -64,18 +64,18 @@ public:
     {
         static_assert(d == 1 || d == 2 || d == 3,
                       "Only 1D, 2D or 3D FFT supported");
-        std::array<long long, d> cast_fft_size;
+        std::array<int, d> cast_fft_size;
         for (int i = 0; i < d; i++) {
-            cast_fft_size[i] = static_cast<long long>(fft_size[i]);
+            cast_fft_size[i] = static_cast<int>(fft_size[i]);
         }
         size_type work_size{};
         GKO_ASSERT_NO_CUFFT_ERRORS(mufftSetAutoAllocation(*handle_, false));
-        GKO_ASSERT_NO_CUFFT_ERRORS(mufftMakePlanMany64(
+        GKO_ASSERT_NO_CUFFT_ERRORS(mufftMakePlanMany(
             *handle_, d, cast_fft_size.data(), cast_fft_size.data(),
-            static_cast<int64>(in_batch_stride), 1, cast_fft_size.data(),
-            static_cast<int64>(out_batch_stride), 1,
+            static_cast<int>(in_batch_stride), 1, cast_fft_size.data(),
+            static_cast<int>(out_batch_stride), 1,
             cufft_type_impl<InValueType, OutValueType>::value,
-            static_cast<int64>(batch_count), &work_size));
+            static_cast<int>(batch_count), &work_size));
         work_area.resize_and_reset(work_size);
         GKO_ASSERT_NO_CUFFT_ERRORS(
             mufftSetWorkArea(*handle_, work_area.get_data()));

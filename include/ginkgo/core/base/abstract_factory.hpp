@@ -401,7 +401,7 @@ private:
                   "semi-colon warnings")
 
 
-#if !(defined(__CUDACC__) || defined(__HIPCC__))
+#if !(defined(__CUDACC__) || defined(__HIPCC__) || defined(__MUSACC__))
 /**
  * Creates a factory parameter in the factory parameters structure.
  *

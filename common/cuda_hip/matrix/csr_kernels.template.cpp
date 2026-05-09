@@ -3027,9 +3027,9 @@ void transpose(std::shared_ptr<const DefaultExecutor> exec,
             orig->get_const_values(), orig->get_const_row_ptrs(),
             orig->get_const_col_idxs(), trans->get_values(),
             trans->get_row_ptrs(), trans->get_col_idxs(), copyValues, idxBase);
-#else   // GKO_COMPILING_CUDA
+#else   // GKO_COMPILING_CUDA or GKO_COMPILING_MUSA
         cudaDataType_t cu_value =
-            gko::kernels::cuda::cuda_data_type<ValueType>();
+            gko::kernels::GKO_DEVICE_NAMESPACE::cuda_data_type<ValueType>();
         cusparseAction_t copyValues = CUSPARSE_ACTION_NUMERIC;
         cusparseIndexBase_t idxBase = CUSPARSE_INDEX_BASE_ZERO;
         cusparseCsr2CscAlg_t alg = CUSPARSE_CSR2CSC_ALG1;

@@ -108,7 +108,7 @@ const device_type<ValueType>* row_vector(
 }  // namespace gko
 
 
-#if defined(GKO_COMPILING_CUDA) || defined(GKO_COMPILING_HIP)
+#if defined(GKO_COMPILING_CUDA) || defined(GKO_COMPILING_HIP) || defined(GKO_COMPILING_MUSA)
 #include "common/cuda_hip/base/kernel_launch_solver.hpp"
 #elif defined(GKO_COMPILING_DPCPP)
 #include "dpcpp/base/kernel_launch_solver.dp.hpp"

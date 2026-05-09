@@ -131,6 +131,33 @@ GKO_INLINE GKO_ATTRIBUTES constexpr unpack_member_type<T> unpack_member(T value)
 }  // namespace gko
 
 
+#elif defined(GKO_COMPILING_MUSA)
+
+#define GKO_KERNEL __device__
+#include "common/cuda_hip/base/math.hpp"
+#include "common/cuda_hip/base/types.hpp"
+
+
+namespace gko {
+namespace kernels {
+namespace musa {
+
+
+template <typename T>
+using unpack_member_type = typename detail::fake_complex_unpack_impl<T>::type;
+
+template <typename T>
+GKO_INLINE GKO_ATTRIBUTES constexpr unpack_member_type<T> unpack_member(T value)
+{
+    return fake_complex_unpack(value);
+}
+
+
+}  // namespace musa
+}  // namespace kernels
+}  // namespace gko
+
+
 #else
 
 #error "This file should only be used inside Ginkgo device compilation"
@@ -250,7 +277,7 @@ typename to_device_type_impl<T>::type map_to_device(T&& param)
 }  // namespace gko
 
 
-#if defined(GKO_COMPILING_CUDA) || defined(GKO_COMPILING_HIP)
+#if defined(GKO_COMPILING_CUDA) || defined(GKO_COMPILING_HIP) || defined(GKO_COMPILING_MUSA)
 #include "common/cuda_hip/base/kernel_launch.hpp"
 #elif defined(GKO_COMPILING_DPCPP)
 #include "dpcpp/base/kernel_launch.dp.hpp"

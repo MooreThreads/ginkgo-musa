@@ -103,6 +103,33 @@ using DeviceValueType = gko::kernels::dpcpp::sycl_type<ValueType>;
 }  // namespace gko
 
 
+#elif defined GKO_COMPILING_MUSA
+
+
+#include "common/cuda_hip/base/batch_struct.hpp"
+#include "common/cuda_hip/log/batch_logger.hpp"
+#include "common/cuda_hip/matrix/batch_struct.hpp"
+#include "common/cuda_hip/preconditioner/batch_preconditioners.hpp"
+#include "common/cuda_hip/stop/batch_criteria.hpp"
+
+
+namespace gko {
+namespace batch {
+namespace solver {
+
+
+namespace device = gko::kernels::musa;
+
+
+template <typename ValueType>
+using DeviceValueType = typename gko::kernels::musa::musa_type<ValueType>;
+
+
+}  // namespace solver
+}  // namespace batch
+}  // namespace gko
+
+
 #else
 
 

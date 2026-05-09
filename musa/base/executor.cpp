@@ -249,15 +249,15 @@ void CudaExecutor::init_handles()
         this->get_device_id() >= 0) {
         const auto id = this->get_device_id();
         detail::musa_scoped_device_id_guard g(id);
-        this->cublas_handle_ = handle_manager<mublasContext>(
+        this->cublas_handle_ = handle_manager<cublasContext>(
             kernels::musa::cublas::init(GKO_MUSA_STREAM(this->get_stream())),
-            [id](mublasHandle_t handle) {
+            [id](cublasContext* handle) {
                 detail::musa_scoped_device_id_guard g(id);
                 kernels::musa::cublas::destroy(handle);
             });
-        this->cusparse_handle_ = handle_manager<musparseContext>(
+        this->cusparse_handle_ = handle_manager<cusparseContext>(
             kernels::musa::cusparse::init(GKO_MUSA_STREAM(this->get_stream())),
-            [id](musparseHandle_t handle) {
+            [id](cusparseContext* handle) {
                 detail::musa_scoped_device_id_guard g(id);
                 kernels::musa::cusparse::destroy(handle);
             });

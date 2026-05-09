@@ -34,6 +34,11 @@
     __VA_ARGS__;                                                             \
     }                                                                        \
     }                                                                        \
+    namespace musa {                                                         \
+    namespace _kernel_namespace {                                            \
+    __VA_ARGS__;                                                             \
+    }                                                                        \
+    }                                                                        \
     static_assert(true,                                                      \
                   "This assert is used to counter the false positive extra " \
                   "semi-colon warnings")

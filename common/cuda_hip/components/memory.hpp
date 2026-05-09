@@ -11,7 +11,7 @@
 #elif defined(GKO_COMPILING_HIP)
 #include "hip/components/memory.hip.hpp"
 #elif defined(GKO_COMPILING_MUSA)
-#include "musa/components/memory.hpp"
+#include "musa/components/memory.muh"
 #else
 #error "Executor definition missing"
 #endif

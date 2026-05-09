@@ -64,7 +64,7 @@ function(musa_compile out_var)
         string(REGEX REPLACE "\\.[^.]+$" ".o" _obj_name "${_obj_name}")
         set(_obj "${CMAKE_CURRENT_BINARY_DIR}/musa_objs/${_obj_name}")
 
-        get_filename_component(_ext "${_src}" EXT)
+        get_filename_component(_ext "${_src}" LAST_EXT)
         set(_extra_flags "")
         if(_ext STREQUAL ".cpp")
             set(_extra_flags -x cuda)

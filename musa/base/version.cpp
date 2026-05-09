@@ -8,7 +8,7 @@
 namespace gko {
 
 
-version version_info::get_musa_version() noexcept
+version version_info::get_cuda_version() noexcept
 {
     // When compiling the module, the header version is the same as the library
     // version. Mismatch between the header and the module versions may happen
